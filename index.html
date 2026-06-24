@@ -3,12 +3,29 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>EkoTaxi — aplikacja mobilna</title>
+  <title>EkoTaxi - aplikacja mobilna</title>
   <link rel="stylesheet" href="style.css" />
 </head>
 
 <body>
   <main class="phone">
+    <div class="app-loader" id="appLoader" role="status" aria-live="polite" aria-label="Ładowanie aplikacji">
+      <div class="loader-brand">
+        <div class="loader-logo">E</div>
+        <span>EkoTaxi</span>
+      </div>
+
+      <div class="loader-road" aria-hidden="true">
+        <div class="loader-car"></div>
+      </div>
+
+      <div class="loader-progress" aria-hidden="true">
+        <span></span>
+      </div>
+
+      <p>Ładowanie aplikacji...</p>
+    </div>
+
     <section class="screen" id="screen">
       <div class="top-bar">
         <div class="logo">
@@ -24,17 +41,50 @@
           <p>Zbieraj punkty i wybierz, czy chcesz sadzić drzewa, czy odebrać zniżkę na kolejny przejazd.</p>
         </section>
 
+        <section class="active-shortcut hidden" id="activeRideShortcut">
+          <div>
+            <strong>🚕 Aktywny przejazd</strong>
+            <small id="activeRideShortcutText">Kierowca jedzie po Ciebie.</small>
+          </div>
+          <button class="mini-btn" id="goToActiveRideBtn" type="button">Przejdź</button>
+        </section>
+
         <section class="card">
-          <h2 class="section-title">Zamów przejazd</h2>
+          <h2 class="section-title">🚕 Zamów przejazd</h2>
 
           <div class="input-wrap">
             <label for="from">Skąd jedziesz?</label>
-            <input id="from" value="Warszawa, Centrum" />
+            <div class="input-action">
+              <input id="from" value="Warszawa, Centrum" />
+              <button class="icon-btn" id="locateBtn" type="button" aria-label="Użyj mojej lokalizacji">GPS</button>
+            </div>
+            <p class="field-status" id="locationStatus" aria-live="polite"></p>
           </div>
 
           <div class="input-wrap">
             <label for="to">Dokąd jedziesz?</label>
             <input id="to" value="Mokotów" />
+          </div>
+
+          <div class="favorite-strip" aria-label="Szybkie ulubione miejsca">
+            <button class="place-chip" type="button" data-address="Dom, ul. Lipowa 8" data-target="from">🏠 Dom jako start</button>
+            <button class="place-chip" type="button" data-address="Biuro, Rondo Daszyńskiego" data-target="to">🏢 Biuro jako cel</button>
+            <button class="place-chip" type="button" data-address="Lotnisko Chopina" data-target="to">✈️ Lotnisko</button>
+          </div>
+
+          <div class="form-grid">
+            <div class="input-wrap">
+              <label for="rideTimeMode">Kiedy?</label>
+              <select id="rideTimeMode">
+                <option value="now">Teraz</option>
+                <option value="later">Na przyszłość</option>
+              </select>
+            </div>
+
+            <div class="input-wrap hidden" id="scheduleWrap">
+              <label for="scheduleTime">Termin</label>
+              <input id="scheduleTime" type="datetime-local" />
+            </div>
           </div>
 
           <button class="btn" id="checkRideBtn">Sprawdź przejazd</button>
@@ -43,7 +93,7 @@
         </section>
 
         <section class="card">
-          <h2 class="section-title">Twój wpływ i korzyści</h2>
+          <h2 class="section-title">🌳 Twój wpływ i korzyści</h2>
 
           <div class="impact">
             <div class="impact-box">
@@ -79,7 +129,7 @@
         </section>
 
         <section class="card hidden" id="rideOptionsSection">
-          <h2 class="section-title">Wybierz przejazd</h2>
+          <h2 class="section-title">🚖 Wybierz przejazd</h2>
 
           <div class="ride-option" data-type="Eko Taxi">
             <div class="ride-header">
@@ -91,8 +141,8 @@
             </div>
 
             <div class="ride-meta">
-              <span class="pill">🚕 6 min</span>
-              <span class="pill green">🌱 12 pkt</span>
+              <span class="pill">6 min</span>
+              <span class="pill green">12 pkt</span>
               <span class="pill">+1 zł zniżki</span>
             </div>
           </div>
@@ -107,8 +157,8 @@
             </div>
 
             <div class="ride-meta">
-              <span class="pill">🚕 11 min</span>
-              <span class="pill green">🌱 18 pkt</span>
+              <span class="pill">11 min</span>
+              <span class="pill green">18 pkt</span>
               <span class="pill">+2 zł zniżki</span>
             </div>
           </div>
@@ -123,21 +173,21 @@
             </div>
 
             <div class="ride-meta">
-              <span class="pill">🚕 4 min</span>
-              <span class="pill green">🌱 15 pkt</span>
+              <span class="pill">4 min</span>
+              <span class="pill green">15 pkt</span>
               <span class="pill">+1,50 zł zniżki</span>
             </div>
           </div>
         </section>
 
         <section class="card hidden" id="summarySection">
-          <h2 class="section-title">Podsumowanie przejazdu</h2>
+          <h2 class="section-title">🧾 Podsumowanie przejazdu</h2>
 
           <div class="mini-map">
             <div class="road"></div>
             <div class="pin start"></div>
             <div class="pin end"></div>
-            <div class="car-dot">🚕</div>
+            <div class="car-dot">Taxi</div>
           </div>
 
           <div class="summary-row">
@@ -147,7 +197,7 @@
 
           <div class="summary-row">
             <span>Trasa</span>
-            <span id="summaryRoute">Warszawa, Centrum → Mokotów</span>
+            <span id="summaryRoute">Warszawa, Centrum -> Mokotów</span>
           </div>
 
           <div class="summary-row">
@@ -158,6 +208,11 @@
           <div class="summary-row">
             <span>Cena</span>
             <span id="summaryPrice">34 zł</span>
+          </div>
+
+          <div class="summary-row">
+            <span>Termin</span>
+            <span id="summarySchedule">Teraz</span>
           </div>
 
           <div class="summary-row">
@@ -186,7 +241,7 @@
         </section>
 
         <section class="card hidden" id="safetySection">
-          <h2 class="section-title">Bezpieczeństwo przejazdu</h2>
+          <h2 class="section-title">🛡️ Bezpieczeństwo przejazdu</h2>
 
           <div class="safety-grid">
             <div class="safety-item"><b>✅</b>Sprawdzony kierowca</div>
@@ -194,7 +249,7 @@
             <div class="safety-item"><b>🚘</b>Auto: WX 4821E</div>
             <div class="safety-item"><b>📲</b>Udostępnij trasę</div>
             <div class="safety-item"><b>🆘</b>Szybka pomoc</div>
-            <div class="safety-item"><b>⭐</b>Kierowca 4.9</div>
+            <div class="safety-item"><b>⭐</b>Kierowca oceniony</div>
           </div>
 
           <p class="small-note">Bezpiecznie do celu. Punkty wykorzystasz tak, jak chcesz.</p>
@@ -202,6 +257,74 @@
           <button class="btn secondary" id="orderBtn" style="margin-top: 14px;">
             Zamów przejazd
           </button>
+        </section>
+      </section>
+
+      <section class="page" id="pageCurrent">
+        <section class="hero">
+          <h1>Trwający<br />przejazd</h1>
+          <p>Tu widzisz kierowcę, auto, trasę, termin i status zamówionego przejazdu.</p>
+        </section>
+
+        <section class="card" id="currentEmptyCard">
+          <h2 class="section-title">🚕 Brak aktywnego przejazdu</h2>
+          <p class="small-note">Zamów przejazd teraz albo zaplanuj go na przyszłość, a szczegóły pojawią się w tej zakładce.</p>
+          <button class="btn" id="currentOrderBtn" type="button" style="margin-top: 14px;">Zamów przejazd</button>
+        </section>
+
+        <section class="card hidden" id="currentRideCard">
+          <div class="status-banner" id="currentStatusBanner">Kierowca jedzie po Ciebie</div>
+
+          <div class="driver-card">
+            <div class="driver-avatar" id="currentDriverAvatar">MK</div>
+            <div>
+              <div class="driver-name" id="currentDriverName">Marek Kowalski</div>
+              <div class="driver-meta" id="currentDriverMeta">Toyota Prius - WX 4821E - 4.9</div>
+            </div>
+          </div>
+
+          <div class="mini-map active-map">
+            <div class="road"></div>
+            <div class="pin start"></div>
+            <div class="pin end"></div>
+            <div class="car-dot">Taxi</div>
+          </div>
+
+          <div class="summary-row">
+            <span>Przyjazd kierowcy</span>
+            <span id="currentEta">6 min</span>
+          </div>
+
+          <div class="summary-row">
+            <span>Status</span>
+            <span id="currentStatus">W drodze po Ciebie</span>
+          </div>
+
+          <div class="summary-row">
+            <span>Trasa</span>
+            <span id="currentRoute">Warszawa, Centrum -> Mokotów</span>
+          </div>
+
+          <div class="summary-row">
+            <span>Przejazd</span>
+            <span id="currentRideType">Eko Taxi</span>
+          </div>
+
+          <div class="summary-row">
+            <span>Termin</span>
+            <span id="currentSchedule">Teraz</span>
+          </div>
+
+          <div class="summary-row">
+            <span>Koszt</span>
+            <span id="currentCost">34 zł</span>
+          </div>
+
+          <button class="btn danger" id="cancelRideBtn" type="button" style="margin-top: 14px;">
+            Anuluj przejazd
+          </button>
+
+          <p class="field-status" id="cancelStatus" aria-live="polite"></p>
         </section>
       </section>
 
@@ -213,10 +336,10 @@
 
         <section class="card">
           <div class="user-header">
-            <div class="user-avatar">👤</div>
+            <div class="user-avatar">KN</div>
             <div>
               <div class="user-name">Karol Nowak</div>
-              <div class="user-desc">Użytkownik EkoTaxi • Warszawa • aktywny od 2026</div>
+              <div class="user-desc">Użytkownik EkoTaxi - Warszawa - aktywny od 2026</div>
             </div>
           </div>
 
@@ -228,7 +351,7 @@
         </section>
 
         <section class="card">
-          <h2 class="section-title">Twoje punkty</h2>
+          <h2 class="section-title">🌿 Twoje punkty</h2>
 
           <div class="impact">
             <div class="impact-box"><small>Dostępne punkty</small><strong id="userPoints">72</strong></div>
@@ -249,7 +372,7 @@
         </section>
 
         <section class="card">
-          <h2 class="section-title">Co zrobić z punktami?</h2>
+          <h2 class="section-title">🎁 Co zrobić z punktami?</h2>
 
           <div class="reward-choice active" data-reward="eco">
             <div>
@@ -273,22 +396,52 @@
         </section>
 
         <section class="card">
-          <h2 class="section-title">Historia przejazdów</h2>
+          <h2 class="section-title">📍 Książka adresowa</h2>
 
-          <div class="history-item">
-            <div><strong>Centrum → Mokotów</strong><small>Eko Taxi • 34 zł • 12 pkt</small></div>
+          <div class="address-book">
+            <div class="place-item" data-address="Dom, ul. Lipowa 8">
+              <div><strong>🏠 Dom</strong><small>ul. Lipowa 8, Warszawa</small></div>
+              <div class="place-actions">
+                <button class="mini-btn" type="button" data-use="from">Start</button>
+                <button class="mini-btn" type="button" data-use="to">Cel</button>
+              </div>
+            </div>
+
+            <div class="place-item" data-address="Biuro, Rondo Daszyńskiego">
+              <div><strong>🏢 Biuro</strong><small>Rondo Daszyńskiego, Warszawa</small></div>
+              <div class="place-actions">
+                <button class="mini-btn" type="button" data-use="from">Start</button>
+                <button class="mini-btn" type="button" data-use="to">Cel</button>
+              </div>
+            </div>
+
+            <div class="place-item" data-address="Lotnisko Chopina">
+              <div><strong>✈️ Lotnisko</strong><small>Terminal A, Warszawa</small></div>
+              <div class="place-actions">
+                <button class="mini-btn" type="button" data-use="from">Start</button>
+                <button class="mini-btn" type="button" data-use="to">Cel</button>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section class="card">
+          <h2 class="section-title">🕘 Historia przejazdów</h2>
+
+          <button class="history-item" type="button" data-history-id="ride-1">
+            <div><strong>Centrum -> Mokotów</strong><small>Eko Taxi - 34 zł - 12 pkt</small></div>
             <span>dzisiaj</span>
-          </div>
+          </button>
 
-          <div class="history-item">
-            <div><strong>Wola → Praga</strong><small>Green Saver • 29 zł • 18 pkt</small></div>
+          <button class="history-item" type="button" data-history-id="ride-2">
+            <div><strong>Wola -> Praga</strong><small>Green Saver - 29 zł - 18 pkt</small></div>
             <span>wczoraj</span>
-          </div>
+          </button>
 
-          <div class="history-item">
-            <div><strong>Śródmieście → Ursynów</strong><small>Comfort Eco • 46 zł • 15 pkt</small></div>
+          <button class="history-item" type="button" data-history-id="ride-3">
+            <div><strong>Śródmieście -> Ursynów</strong><small>Comfort Eco - 46 zł - 15 pkt</small></div>
             <span>pn.</span>
-          </div>
+          </button>
         </section>
       </section>
 
@@ -299,7 +452,7 @@
         </section>
 
         <section class="card">
-          <h2 class="section-title">Preferencje przejazdu</h2>
+          <h2 class="section-title">⚙️ Preferencje przejazdu</h2>
 
           <div class="setting-row">
             <div><strong>Spokojna jazda</strong><small>Preferuj kierowców z łagodnym stylem jazdy.</small></div>
@@ -318,7 +471,7 @@
         </section>
 
         <section class="card">
-          <h2 class="section-title">Punkty i nagrody</h2>
+          <h2 class="section-title">🎁 Punkty i nagrody</h2>
 
           <div class="input-wrap">
             <label for="rewardSelect">Domyślne wykorzystanie punktów</label>
@@ -334,7 +487,7 @@
         </section>
 
         <section class="card">
-          <h2 class="section-title">Powiadomienia</h2>
+          <h2 class="section-title">🔔 Powiadomienia</h2>
 
           <div class="setting-row">
             <div><strong>Status kierowcy</strong><small>Informacje o przyjeździe kierowcy.</small></div>
@@ -351,16 +504,17 @@
 
     <nav class="bottom-nav">
       <button class="nav-item active" data-page="pageHome"><span>🚕</span>Przejazd</button>
+      <button class="nav-item hidden" data-page="pageCurrent"><span>▶️</span>Trwa</button>
       <button class="nav-item" data-page="pageProfile"><span>👤</span>Profil</button>
-      <button class="nav-item" data-page="pageSettings"><span>⚙️</span>Ustawienia</button>
+      <button class="nav-item" data-page="pageSettings"><span>⚙</span>Ustawienia</button>
     </nav>
 
     <div class="modal" id="successModal">
       <div class="success-box">
         <div class="tree-animation">
-          <span class="leaf one">🍃</span>
-          <span class="tree" id="successIcon">🌳</span>
-          <span class="leaf two">🍃</span>
+          <span class="leaf one"></span>
+          <span class="tree" id="successIcon">OK</span>
+          <span class="leaf two"></span>
         </div>
 
         <h2>Przejazd zamówiony!</h2>
@@ -371,7 +525,60 @@
           Punkty możesz wykorzystać po swojemu.
         </p>
 
-        <button class="btn" id="resetBtn">Wróć do początku</button>
+        <button class="btn" id="viewCurrentRideBtn">Zobacz przejazd</button>
+        <button class="btn secondary compact" id="closeSuccessBtn" type="button">Zostań tutaj</button>
+      </div>
+    </div>
+
+    <div class="modal" id="historyModal">
+      <div class="success-box detail-box">
+        <h2 id="historyTitle">Szczegóły przejazdu</h2>
+
+        <div class="detail-list">
+          <div class="summary-row">
+            <span>Trasa</span>
+            <span id="historyRoute">Centrum -> Mokotów</span>
+          </div>
+          <div class="summary-row">
+            <span>Przejazd</span>
+            <span id="historyRideType">Eko Taxi</span>
+          </div>
+          <div class="summary-row">
+            <span>Data</span>
+            <span id="historyDate">dzisiaj</span>
+          </div>
+          <div class="summary-row">
+            <span>Cena</span>
+            <span id="historyPrice">34 zł</span>
+          </div>
+          <div class="summary-row">
+            <span>Punkty</span>
+            <span id="historyPoints">12 pkt</span>
+          </div>
+        </div>
+
+        <div class="split-panel">
+          <h3>Podziel koszt</h3>
+
+          <div class="input-wrap">
+            <label for="contactSelect">Kontakt</label>
+            <select id="contactSelect">
+              <option value="0">Anna Zielińska</option>
+              <option value="1">Michał Nowak</option>
+              <option value="2">Ola Wiśniewska</option>
+            </select>
+          </div>
+
+          <div class="eco-message" id="splitMessagePreview">
+            Hej! Zwróć mi 17 zł za przejazd Centrum -> Mokotów.
+          </div>
+
+          <button class="btn" id="shareSplitBtn" type="button">Udostępnij wiadomość</button>
+          <button class="btn secondary compact" id="whatsappSplitBtn" type="button">Wyślij przez WhatsApp</button>
+          <button class="btn secondary compact" id="closeHistoryBtn" type="button">Zamknij</button>
+
+          <p class="field-status" id="historyShareStatus" aria-live="polite"></p>
+        </div>
       </div>
     </div>
   </main>
