@@ -91,11 +91,41 @@ const historyRides = [
   }
 ];
 
+const rideStatuses = [
+  "Szukamy kierowcy",
+  "Kierowca jedzie",
+  "Kierowca czeka",
+  "W trasie",
+  "Zakończony"
+];
+
+const promos = {
+  EKO10: {
+    label: "EKO10",
+    type: "percent",
+    value: 10
+  },
+  GREEN5: {
+    label: "GREEN5",
+    type: "amount",
+    value: 5
+  },
+  WELCOME15: {
+    label: "WELCOME15",
+    type: "percent",
+    value: 15
+  }
+};
+
 let basePoints = 72;
 let selectedRide = null;
 let rewardMode = "eco";
 let activeRide = null;
 let selectedHistoryRide = historyRides[0];
+let activePromo = null;
+let scheduledRides = [];
+let completedRideForRating = null;
+let selectedRating = 5;
 
 const appLoader = document.getElementById("appLoader");
 const screen = document.getElementById("screen");
@@ -116,10 +146,18 @@ const locationStatus = document.getElementById("locationStatus");
 const rideTimeMode = document.getElementById("rideTimeMode");
 const scheduleWrap = document.getElementById("scheduleWrap");
 const scheduleTime = document.getElementById("scheduleTime");
+const paymentSelect = document.getElementById("paymentSelect");
+const promoCode = document.getElementById("promoCode");
+const applyPromoBtn = document.getElementById("applyPromoBtn");
+const promoStatus = document.getElementById("promoStatus");
 
 const summaryType = document.getElementById("summaryType");
 const summaryRoute = document.getElementById("summaryRoute");
 const summaryPrice = document.getElementById("summaryPrice");
+const summaryDiscountRow = document.getElementById("summaryDiscountRow");
+const summaryDiscount = document.getElementById("summaryDiscount");
+const summaryFinalPrice = document.getElementById("summaryFinalPrice");
+const summaryPayment = document.getElementById("summaryPayment");
 const summarySchedule = document.getElementById("summarySchedule");
 const summaryTime = document.getElementById("summaryTime");
 const summaryPoints = document.getElementById("summaryPoints");
@@ -162,6 +200,11 @@ const currentRoute = document.getElementById("currentRoute");
 const currentRideType = document.getElementById("currentRideType");
 const currentSchedule = document.getElementById("currentSchedule");
 const currentCost = document.getElementById("currentCost");
+const currentPayment = document.getElementById("currentPayment");
+const rideStatusTrack = document.getElementById("rideStatusTrack");
+const chatStatus = document.getElementById("chatStatus");
+const advanceStatusBtn = document.getElementById("advanceStatusBtn");
+const finishRideBtn = document.getElementById("finishRideBtn");
 const cancelRideBtn = document.getElementById("cancelRideBtn");
 const cancelStatus = document.getElementById("cancelStatus");
 
@@ -178,14 +221,26 @@ const shareSplitBtn = document.getElementById("shareSplitBtn");
 const whatsappSplitBtn = document.getElementById("whatsappSplitBtn");
 const closeHistoryBtn = document.getElementById("closeHistoryBtn");
 const historyShareStatus = document.getElementById("historyShareStatus");
+const historyList = document.getElementById("historyList");
+const scheduledRidesCard = document.getElementById("scheduledRidesCard");
+const scheduledRidesList = document.getElementById("scheduledRidesList");
+const addressBook = document.querySelector(".address-book");
+const newPlaceName = document.getElementById("newPlaceName");
+const newPlaceAddress = document.getElementById("newPlaceAddress");
+const savePlaceBtn = document.getElementById("savePlaceBtn");
+const savePlaceStatus = document.getElementById("savePlaceStatus");
+const finishModal = document.getElementById("finishModal");
+const finishSummary = document.getElementById("finishSummary");
+const ratingStars = document.getElementById("ratingStars");
+const ratingComment = document.getElementById("ratingComment");
+const saveRatingBtn = document.getElementById("saveRatingBtn");
 
 const navItems = document.querySelectorAll(".nav-item");
 const currentNavItem = document.querySelector('[data-page="pageCurrent"]');
 const pages = document.querySelectorAll(".page");
 const switches = document.querySelectorAll(".switch");
 const quickPlaceButtons = document.querySelectorAll(".place-chip");
-const addressButtons = document.querySelectorAll(".place-item .mini-btn");
-const historyItems = document.querySelectorAll(".history-item");
+const chatButtons = document.querySelectorAll(".chat-chip");
 
 function hideAppLoader() {
   if (!appLoader || appLoader.classList.contains("hide")) return;
@@ -209,6 +264,60 @@ function formatPrice(value) {
   });
 
   return `${amount} zł`;
+}
+
+function getDiscountAmount(price = selectedRide?.price || 0) {
+  if (!activePromo) return 0;
+
+  if (activePromo.type === "percent") {
+    return Math.round(price * activePromo.value) / 100;
+  }
+
+  return Math.min(activePromo.value, price);
+}
+
+function getFinalPrice(price = selectedRide?.price || 0) {
+  return Math.max(price - getDiscountAmount(price), 0);
+}
+
+function updatePriceSummary() {
+  if (!selectedRide) return;
+
+  const discount = getDiscountAmount(selectedRide.price);
+  const finalPrice = getFinalPrice(selectedRide.price);
+
+  summaryPrice.textContent = formatPrice(selectedRide.price);
+  summaryFinalPrice.textContent = formatPrice(finalPrice);
+  summaryPayment.textContent = paymentSelect.value;
+  summaryDiscountRow.classList.toggle("hidden", discount <= 0);
+  summaryDiscount.textContent = `-${formatPrice(discount)}`;
+}
+
+function applyPromoCode() {
+  const code = promoCode.value.trim().toUpperCase();
+
+  if (!code) {
+    activePromo = null;
+    promoStatus.textContent = "";
+    promoStatus.classList.remove("success", "error");
+    updatePriceSummary();
+    return;
+  }
+
+  if (!promos[code]) {
+    activePromo = null;
+    promoStatus.textContent = "Nie znaleziono takiego kuponu.";
+    promoStatus.classList.add("error");
+    promoStatus.classList.remove("success");
+    updatePriceSummary();
+    return;
+  }
+
+  activePromo = promos[code];
+  promoStatus.textContent = `Kupon ${code} aktywny.`;
+  promoStatus.classList.add("success");
+  promoStatus.classList.remove("error");
+  updatePriceSummary();
 }
 
 function setLocationStatus(message, type = "") {
@@ -410,10 +519,10 @@ function selectRide(type) {
   });
 
   summaryType.textContent = selectedRide.name;
-  summaryPrice.textContent = formatPrice(selectedRide.price);
   summaryPoints.textContent = `${selectedRide.points} pkt`;
 
   updateSummaryRoute();
+  updatePriceSummary();
   updateScheduleSummary();
   updateProgress(selectedRide.points);
   updateSummaryMessage();
@@ -439,6 +548,7 @@ function createActiveRide() {
   const driver = pickDriver();
   const isScheduled = rideTimeMode.value === "later";
   const scheduleLabel = formatScheduleLabel();
+  const statusIndex = isScheduled ? 0 : 1;
 
   activeRide = {
     id: Date.now(),
@@ -448,13 +558,47 @@ function createActiveRide() {
     from: fromInput.value,
     to: toInput.value,
     price: ride.price,
+    finalPrice: getFinalPrice(ride.price),
+    discount: getDiscountAmount(ride.price),
+    promo: activePromo?.label || "",
+    payment: paymentSelect.value,
     scheduleLabel,
     eta: isScheduled ? "O zaplanowanej godzinie" : `${ride.time} min`,
-    status: isScheduled ? "Zaplanowany" : "W drodze po Ciebie",
+    statusIndex,
+    status: rideStatuses[statusIndex],
     banner: isScheduled ? "Przejazd zaplanowany" : "Kierowca jedzie po Ciebie",
     isScheduled,
     canCancel: true
   };
+}
+
+function renderStatusTrack() {
+  rideStatusTrack.innerHTML = rideStatuses.map((status, index) => {
+    const state = index < activeRide.statusIndex ? "done" : index === activeRide.statusIndex ? "active" : "";
+    return `<span class="${state}">${status}</span>`;
+  }).join("");
+}
+
+function syncActiveRideStatus() {
+  activeRide.status = rideStatuses[activeRide.statusIndex];
+  activeRide.canCancel = activeRide.statusIndex < 3;
+
+  if (activeRide.statusIndex === 0) {
+    activeRide.banner = "Szukamy kierowcy";
+    activeRide.eta = "Za chwilę";
+  } else if (activeRide.statusIndex === 1) {
+    activeRide.banner = "Kierowca jedzie po Ciebie";
+    activeRide.eta = `${activeRide.ride.time} min`;
+  } else if (activeRide.statusIndex === 2) {
+    activeRide.banner = "Kierowca czeka pod adresem";
+    activeRide.eta = "Już jest";
+  } else if (activeRide.statusIndex === 3) {
+    activeRide.banner = "Jesteś w trasie";
+    activeRide.eta = "W trasie";
+  } else {
+    activeRide.banner = "Przejazd zakończony";
+    activeRide.eta = "Zakończono";
+  }
 }
 
 function updateCurrentRideView() {
@@ -472,6 +616,7 @@ function updateCurrentRideView() {
     return;
   }
 
+  syncActiveRideStatus();
   activeRideShortcutText.textContent = `${activeRide.driver.name} • ${activeRide.eta} • ${activeRide.route}`;
   currentStatusBanner.textContent = activeRide.banner;
   currentDriverAvatar.textContent = activeRide.driver.initials;
@@ -482,9 +627,72 @@ function updateCurrentRideView() {
   currentRoute.textContent = activeRide.route;
   currentRideType.textContent = activeRide.ride.name;
   currentSchedule.textContent = activeRide.scheduleLabel;
-  currentCost.textContent = formatPrice(activeRide.price);
+  currentCost.textContent = activeRide.discount > 0
+    ? `${formatPrice(activeRide.finalPrice)} (${activeRide.promo})`
+    : formatPrice(activeRide.finalPrice);
+  currentPayment.textContent = activeRide.payment;
+  renderStatusTrack();
   cancelRideBtn.classList.toggle("hidden", !activeRide.canCancel);
+  advanceStatusBtn.classList.toggle("hidden", activeRide.statusIndex >= rideStatuses.length - 2);
+  finishRideBtn.classList.toggle("hidden", activeRide.statusIndex < 3);
   setCancelStatus(activeRide.canCancel ? "Możesz anulować, dopóki kierowca Cię nie odebrał." : "");
+}
+
+function renderScheduledRides() {
+  scheduledRidesCard.classList.toggle("hidden", scheduledRides.length === 0);
+  scheduledRidesList.innerHTML = scheduledRides.map(ride => `
+    <div class="scheduled-item" data-scheduled-id="${ride.id}">
+      <div>
+        <strong>${ride.route}</strong>
+        <small>${ride.ride.name} • ${ride.scheduleLabel} • ${formatPrice(ride.finalPrice)}</small>
+      </div>
+      <div class="scheduled-actions">
+        <button class="mini-btn" type="button" data-action="start">Start test</button>
+        <button class="mini-btn" type="button" data-action="edit">+15 min</button>
+        <button class="mini-btn danger-mini" type="button" data-action="cancel">Anuluj</button>
+      </div>
+    </div>
+  `).join("");
+}
+
+function addScheduledRide() {
+  createActiveRide();
+  scheduledRides.unshift({ ...activeRide, id: Date.now() });
+  activeRide = null;
+  renderScheduledRides();
+  updateCurrentRideView();
+}
+
+function handleScheduledAction(item, action) {
+  const rideId = Number(item.dataset.scheduledId);
+  const ride = scheduledRides.find(entry => entry.id === rideId);
+
+  if (!ride) return;
+
+  if (action === "cancel") {
+    scheduledRides = scheduledRides.filter(entry => entry.id !== rideId);
+    renderScheduledRides();
+    return;
+  }
+
+  if (action === "edit") {
+    ride.scheduleLabel = `${ride.scheduleLabel} +15 min`;
+    renderScheduledRides();
+    return;
+  }
+
+  activeRide = {
+    ...ride,
+    statusIndex: 1,
+    isScheduled: false,
+    scheduleLabel: "Teraz",
+    eta: `${ride.ride.time} min`,
+    banner: "Kierowca jedzie po Ciebie"
+  };
+  scheduledRides = scheduledRides.filter(entry => entry.id !== rideId);
+  renderScheduledRides();
+  updateCurrentRideView();
+  changePage("pageCurrent");
 }
 
 function orderRide() {
@@ -494,6 +702,19 @@ function orderRide() {
 
   if (rideTimeMode.value === "later" && !scheduleTime.value) {
     setDefaultScheduleTime();
+  }
+
+  if (rideTimeMode.value === "later") {
+    addScheduledRide();
+    successIcon.textContent = "OK";
+    successText.innerHTML = `
+      Przejazd zaplanowany na ${formatScheduleLabel()}.<br />
+      Płatność: ${paymentSelect.value}.<br />
+      Znajdziesz go na górze ekranu głównego.
+    `;
+    viewCurrentRideBtn.textContent = "Wróć do głównej";
+    successModal.classList.add("show");
+    return;
   }
 
   createActiveRide();
@@ -508,6 +729,7 @@ function orderRide() {
     : `Zdobywasz ${activeRide.ride.points} punktów, około ${formatPrice(activeRide.ride.discount)} zniżki.`;
 
   successIcon.textContent = "OK";
+  viewCurrentRideBtn.textContent = "Zobacz przejazd";
   successText.innerHTML = `
     ${timeLine}<br />
     Przyjedzie: ${driverLine}.<br />
@@ -530,6 +752,50 @@ function cancelRide() {
   updateCurrentRideView();
   setCancelStatus("");
   currentEmptyCard.querySelector(".small-note").textContent = `Anulowano przejazd: ${cancelledRoute}. Możesz zamówić kolejny.`;
+}
+
+function advanceRideStatus() {
+  if (!activeRide) return;
+
+  activeRide.statusIndex = Math.min(activeRide.statusIndex + 1, 3);
+  updateCurrentRideView();
+}
+
+function addCompletedRideToHistory(ride) {
+  historyRides.unshift({
+    id: `ride-${Date.now()}`,
+    route: ride.route,
+    type: ride.ride.name,
+    price: ride.finalPrice,
+    originalPrice: ride.price,
+    points: ride.ride.points,
+    date: "przed chwilą",
+    driver: ride.driver.name,
+    payment: ride.payment,
+    rating: null,
+    comment: ""
+  });
+  renderHistory();
+}
+
+function finishRide() {
+  if (!activeRide) return;
+
+  activeRide.statusIndex = 4;
+  syncActiveRideStatus();
+  completedRideForRating = { ...activeRide };
+  addCompletedRideToHistory(activeRide);
+  finishSummary.textContent = `Przejazd ${activeRide.route} zakończony. Zapłacono ${formatPrice(activeRide.finalPrice)} i zdobyto ${activeRide.ride.points} pkt.`;
+  activeRide = null;
+  updateCurrentRideView();
+  finishModal.classList.add("show");
+  changePage("pageProfile");
+}
+
+function sendQuickMessage(message) {
+  chatStatus.textContent = `Wysłano do kierowcy: "${message}"`;
+  chatStatus.classList.add("success");
+  chatStatus.classList.remove("error");
 }
 
 function changePage(pageId) {
@@ -561,6 +827,18 @@ function useSavedAddress(address, target) {
 
   updateSummaryRoute();
   changePage("pageHome");
+}
+
+function renderHistory() {
+  historyList.innerHTML = historyRides.map(ride => `
+    <button class="history-item" type="button" data-history-id="${ride.id}">
+      <div>
+        <strong>${ride.route}</strong>
+        <small>${ride.type} - ${formatPrice(ride.price)} - ${ride.points} pkt${ride.rating ? ` - ${ride.rating}★` : ""}</small>
+      </div>
+      <span>${ride.date}</span>
+    </button>
+  `).join("");
 }
 
 function getSelectedContact() {
@@ -634,10 +912,67 @@ function openWhatsappSplit() {
   window.open(href, "_blank", "noopener");
 }
 
+function updateRatingStars() {
+  ratingStars.querySelectorAll("button").forEach(button => {
+    button.classList.toggle("active", Number(button.dataset.rating) <= selectedRating);
+  });
+}
+
+function saveRating() {
+  if (!completedRideForRating) {
+    finishModal.classList.remove("show");
+    return;
+  }
+
+  const latestRide = historyRides[0];
+  latestRide.rating = selectedRating;
+  latestRide.comment = ratingComment.value.trim();
+  renderHistory();
+  finishModal.classList.remove("show");
+  ratingComment.value = "";
+}
+
+function saveNewPlace() {
+  const name = newPlaceName.value.trim();
+  const address = newPlaceAddress.value.trim();
+
+  if (!name || !address) {
+    savePlaceStatus.textContent = "Podaj nazwę i adres miejsca.";
+    savePlaceStatus.classList.add("error");
+    savePlaceStatus.classList.remove("success");
+    return;
+  }
+
+  const item = document.createElement("div");
+  item.className = "place-item";
+  item.dataset.address = address;
+  item.innerHTML = `
+    <div><strong>📍 ${name}</strong><small>${address}</small></div>
+    <div class="place-actions">
+      <button class="mini-btn" type="button" data-use="from">Start</button>
+      <button class="mini-btn" type="button" data-use="to">Cel</button>
+    </div>
+  `;
+  addressBook.appendChild(item);
+  newPlaceName.value = "";
+  newPlaceAddress.value = "";
+  savePlaceStatus.textContent = "Miejsce zapisane w książce adresowej.";
+  savePlaceStatus.classList.add("success");
+  savePlaceStatus.classList.remove("error");
+}
+
 function bindEvents() {
   locateBtn.addEventListener("click", useBrowserLocation);
   fromInput.addEventListener("input", updateSummaryRoute);
   toInput.addEventListener("input", updateSummaryRoute);
+
+  paymentSelect.addEventListener("change", updatePriceSummary);
+  applyPromoBtn.addEventListener("click", applyPromoCode);
+  promoCode.addEventListener("keydown", event => {
+    if (event.key === "Enter") {
+      applyPromoCode();
+    }
+  });
 
   rideTimeMode.addEventListener("change", updateScheduleSummary);
   scheduleTime.addEventListener("change", updateScheduleSummary);
@@ -654,7 +989,7 @@ function bindEvents() {
 
   viewCurrentRideBtn.addEventListener("click", () => {
     successModal.classList.remove("show");
-    changePage("pageCurrent");
+    changePage(activeRide ? "pageCurrent" : "pageHome");
   });
 
   closeSuccessBtn.addEventListener("click", () => {
@@ -670,6 +1005,14 @@ function bindEvents() {
   });
 
   cancelRideBtn.addEventListener("click", cancelRide);
+  advanceStatusBtn.addEventListener("click", advanceRideStatus);
+  finishRideBtn.addEventListener("click", finishRide);
+
+  chatButtons.forEach(button => {
+    button.addEventListener("click", () => {
+      sendQuickMessage(button.dataset.message);
+    });
+  });
 
   navItems.forEach(item => {
     item.addEventListener("click", () => {
@@ -699,17 +1042,27 @@ function bindEvents() {
     });
   });
 
-  addressButtons.forEach(button => {
-    button.addEventListener("click", () => {
-      const item = button.closest(".place-item");
-      useSavedAddress(item.dataset.address, button.dataset.use);
-    });
+  addressBook.addEventListener("click", event => {
+    const button = event.target.closest(".mini-btn");
+    if (!button) return;
+
+    const item = button.closest(".place-item");
+    useSavedAddress(item.dataset.address, button.dataset.use);
   });
 
-  historyItems.forEach(item => {
-    item.addEventListener("click", () => {
-      openHistoryRide(item.dataset.historyId);
-    });
+  historyList.addEventListener("click", event => {
+    const item = event.target.closest(".history-item");
+    if (!item) return;
+
+    openHistoryRide(item.dataset.historyId);
+  });
+
+  scheduledRidesList.addEventListener("click", event => {
+    const button = event.target.closest(".mini-btn");
+    const item = event.target.closest(".scheduled-item");
+    if (!button || !item) return;
+
+    handleScheduledAction(item, button.dataset.action);
   });
 
   contactSelect.addEventListener("change", updateHistorySplitPreview);
@@ -722,6 +1075,18 @@ function bindEvents() {
   closeHistoryBtn.addEventListener("click", () => {
     historyModal.classList.remove("show");
   });
+
+  savePlaceBtn.addEventListener("click", saveNewPlace);
+
+  ratingStars.addEventListener("click", event => {
+    const button = event.target.closest("button");
+    if (!button) return;
+
+    selectedRating = Number(button.dataset.rating);
+    updateRatingStars();
+  });
+
+  saveRatingBtn.addEventListener("click", saveRating);
 }
 
 setDefaultScheduleTime();
@@ -729,6 +1094,9 @@ updateProgress(0);
 updateRewardMode("eco");
 updateScheduleSummary();
 updateCurrentRideView();
+renderHistory();
+renderScheduledRides();
+updateRatingStars();
 bindEvents();
 
 window.addEventListener("load", () => {

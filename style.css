@@ -366,6 +366,39 @@ label {
   font-weight: 900;
 }
 
+.scheduled-list,
+.quick-chat-actions {
+  display: grid;
+  gap: 10px;
+}
+
+.scheduled-item {
+  display: grid;
+  gap: 10px;
+  padding: 13px;
+  border: 1px solid #edf1ed;
+  border-radius: 18px;
+  background: #f7faf7;
+}
+
+.scheduled-item strong {
+  display: block;
+  font-size: 14px;
+  margin-bottom: 4px;
+}
+
+.scheduled-item small {
+  color: #666;
+  font-size: 12px;
+  line-height: 1.35;
+}
+
+.scheduled-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
 .form-grid {
   display: grid;
   grid-template-columns: 1fr;
@@ -772,6 +805,31 @@ select:focus {
   margin-bottom: 14px;
 }
 
+.status-track {
+  display: grid;
+  gap: 8px;
+  margin-bottom: 14px;
+}
+
+.status-track span {
+  padding: 9px 11px;
+  border-radius: 14px;
+  background: #f0f4f0;
+  color: #666;
+  font-size: 12px;
+  font-weight: 900;
+}
+
+.status-track span.done {
+  background: #def7e8;
+  color: #137a3d;
+}
+
+.status-track span.active {
+  background: #111;
+  color: #fff;
+}
+
 .driver-card {
   display: flex;
   gap: 13px;
@@ -810,6 +868,26 @@ select:focus {
   font-size: 12px;
   color: #666;
   line-height: 1.35;
+}
+
+.quick-chat {
+  margin-top: 14px;
+  padding: 13px;
+  border: 1px solid #edf1ed;
+  border-radius: 20px;
+  background: #f7faf7;
+}
+
+.quick-chat h3,
+.save-place-form h3,
+.rating-panel h3 {
+  font-size: 16px;
+  margin-bottom: 10px;
+}
+
+.chat-chip {
+  white-space: normal;
+  text-align: left;
 }
 
 .user-header {
@@ -944,6 +1022,16 @@ select:focus {
   color: #fff;
   font-size: 11px;
   padding: 8px;
+}
+
+.danger-mini {
+  background: #b42318;
+}
+
+.save-place-form {
+  margin-top: 14px;
+  padding-top: 14px;
+  border-top: 1px solid #eef2ee;
 }
 
 .history-item {
@@ -1208,6 +1296,33 @@ select:focus {
 .split-panel h3 {
   font-size: 17px;
   margin-bottom: 12px;
+}
+
+.rating-panel {
+  margin-top: 14px;
+}
+
+.rating-stars {
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+  margin: 12px 0 14px;
+}
+
+.rating-stars button {
+  width: 42px;
+  height: 42px;
+  border: none;
+  border-radius: 14px;
+  background: #eef2ee;
+  color: #9a9a9a;
+  font-size: 24px;
+  cursor: pointer;
+}
+
+.rating-stars button.active {
+  background: #fff4ce;
+  color: #f5a400;
 }
 
 @media (max-width: 430px) {

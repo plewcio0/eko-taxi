@@ -49,6 +49,11 @@
           <button class="mini-btn" id="goToActiveRideBtn" type="button">Przejdź</button>
         </section>
 
+        <section class="card hidden" id="scheduledRidesCard">
+          <h2 class="section-title">📅 Zaplanowane przejazdy</h2>
+          <div class="scheduled-list" id="scheduledRidesList"></div>
+        </section>
+
         <section class="card">
           <h2 class="section-title">🚕 Zamów przejazd</h2>
 
@@ -85,6 +90,25 @@
               <label for="scheduleTime">Termin</label>
               <input id="scheduleTime" type="datetime-local" />
             </div>
+          </div>
+
+          <div class="input-wrap">
+            <label for="paymentSelect">Płatność</label>
+            <select id="paymentSelect">
+              <option value="Karta •••• 4242">Karta •••• 4242</option>
+              <option value="BLIK">BLIK</option>
+              <option value="Gotówka">Gotówka</option>
+              <option value="Faktura firmowa">Faktura firmowa</option>
+            </select>
+          </div>
+
+          <div class="input-wrap">
+            <label for="promoCode">Kupon lub promocja</label>
+            <div class="input-action">
+              <input id="promoCode" placeholder="np. EKO10" />
+              <button class="icon-btn" id="applyPromoBtn" type="button">OK</button>
+            </div>
+            <p class="field-status" id="promoStatus" aria-live="polite"></p>
           </div>
 
           <button class="btn" id="checkRideBtn">Sprawdź przejazd</button>
@@ -210,6 +234,21 @@
             <span id="summaryPrice">34 zł</span>
           </div>
 
+          <div class="summary-row hidden" id="summaryDiscountRow">
+            <span>Kupon</span>
+            <span id="summaryDiscount">-0 zł</span>
+          </div>
+
+          <div class="summary-row">
+            <span>Do zapłaty</span>
+            <span id="summaryFinalPrice">34 zł</span>
+          </div>
+
+          <div class="summary-row">
+            <span>Płatność</span>
+            <span id="summaryPayment">Karta •••• 4242</span>
+          </div>
+
           <div class="summary-row">
             <span>Termin</span>
             <span id="summarySchedule">Teraz</span>
@@ -275,6 +314,8 @@
         <section class="card hidden" id="currentRideCard">
           <div class="status-banner" id="currentStatusBanner">Kierowca jedzie po Ciebie</div>
 
+          <div class="status-track" id="rideStatusTrack"></div>
+
           <div class="driver-card">
             <div class="driver-avatar" id="currentDriverAvatar">MK</div>
             <div>
@@ -319,6 +360,29 @@
             <span>Koszt</span>
             <span id="currentCost">34 zł</span>
           </div>
+
+          <div class="summary-row">
+            <span>Płatność</span>
+            <span id="currentPayment">Karta •••• 4242</span>
+          </div>
+
+          <div class="quick-chat">
+            <h3>Szybki kontakt</h3>
+            <div class="quick-chat-actions">
+              <button class="place-chip chat-chip" type="button" data-message="Już schodzę, będę za minutę.">Już schodzę</button>
+              <button class="place-chip chat-chip" type="button" data-message="Proszę poczekać 2 minuty.">Poczekaj 2 min</button>
+              <button class="place-chip chat-chip" type="button" data-message="Stoję przy wejściu głównym.">Przy wejściu</button>
+            </div>
+            <p class="field-status" id="chatStatus" aria-live="polite"></p>
+          </div>
+
+          <button class="btn secondary" id="advanceStatusBtn" type="button" style="margin-top: 14px;">
+            Następny status
+          </button>
+
+          <button class="btn" id="finishRideBtn" type="button" style="margin-top: 10px;">
+            Zakończ przejazd
+          </button>
 
           <button class="btn danger" id="cancelRideBtn" type="button" style="margin-top: 14px;">
             Anuluj przejazd
@@ -423,25 +487,26 @@
               </div>
             </div>
           </div>
+
+          <div class="save-place-form">
+            <h3>Zapisz nowe miejsce</h3>
+            <div class="input-wrap">
+              <label for="newPlaceName">Nazwa</label>
+              <input id="newPlaceName" placeholder="np. Siłownia" />
+            </div>
+            <div class="input-wrap">
+              <label for="newPlaceAddress">Adres</label>
+              <input id="newPlaceAddress" placeholder="np. ul. Prosta 12" />
+            </div>
+            <button class="btn secondary compact" id="savePlaceBtn" type="button">Dodaj miejsce</button>
+            <p class="field-status" id="savePlaceStatus" aria-live="polite"></p>
+          </div>
         </section>
 
         <section class="card">
           <h2 class="section-title">🕘 Historia przejazdów</h2>
 
-          <button class="history-item" type="button" data-history-id="ride-1">
-            <div><strong>Centrum -> Mokotów</strong><small>Eko Taxi - 34 zł - 12 pkt</small></div>
-            <span>dzisiaj</span>
-          </button>
-
-          <button class="history-item" type="button" data-history-id="ride-2">
-            <div><strong>Wola -> Praga</strong><small>Green Saver - 29 zł - 18 pkt</small></div>
-            <span>wczoraj</span>
-          </button>
-
-          <button class="history-item" type="button" data-history-id="ride-3">
-            <div><strong>Śródmieście -> Ursynów</strong><small>Comfort Eco - 46 zł - 15 pkt</small></div>
-            <span>pn.</span>
-          </button>
+          <div id="historyList"></div>
         </section>
       </section>
 
@@ -578,6 +643,32 @@
           <button class="btn secondary compact" id="closeHistoryBtn" type="button">Zamknij</button>
 
           <p class="field-status" id="historyShareStatus" aria-live="polite"></p>
+        </div>
+      </div>
+    </div>
+
+    <div class="modal" id="finishModal">
+      <div class="success-box detail-box">
+        <h2>Przejazd zakończony</h2>
+
+        <div class="eco-message" id="finishSummary">
+          Zdobywasz punkty i możesz ocenić kierowcę.
+        </div>
+
+        <div class="rating-panel">
+          <h3>Oceń kierowcę</h3>
+          <div class="rating-stars" id="ratingStars">
+            <button type="button" data-rating="1">★</button>
+            <button type="button" data-rating="2">★</button>
+            <button type="button" data-rating="3">★</button>
+            <button type="button" data-rating="4">★</button>
+            <button type="button" data-rating="5">★</button>
+          </div>
+          <div class="input-wrap">
+            <label for="ratingComment">Komentarz</label>
+            <input id="ratingComment" placeholder="np. punktualnie i spokojnie" />
+          </div>
+          <button class="btn" id="saveRatingBtn" type="button">Zapisz ocenę</button>
         </div>
       </div>
     </div>
