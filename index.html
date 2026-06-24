@@ -1,0 +1,381 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>EkoTaxi — aplikacja mobilna</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+
+<body>
+  <main class="phone">
+    <section class="screen" id="screen">
+      <div class="top-bar">
+        <div class="logo">
+          <div class="logo-icon">🌿</div>
+          EkoTaxi
+        </div>
+        <div class="badge">EKO</div>
+      </div>
+
+      <section class="page active" id="pageHome">
+        <section class="hero">
+          <h1>Jedziesz.<br />Decydujesz.</h1>
+          <p>Zbieraj punkty i wybierz, czy chcesz sadzić drzewa, czy odebrać zniżkę na kolejny przejazd.</p>
+        </section>
+
+        <section class="card">
+          <h2 class="section-title">Zamów przejazd</h2>
+
+          <div class="input-wrap">
+            <label for="from">Skąd jedziesz?</label>
+            <input id="from" value="Warszawa, Centrum" />
+          </div>
+
+          <div class="input-wrap">
+            <label for="to">Dokąd jedziesz?</label>
+            <input id="to" value="Mokotów" />
+          </div>
+
+          <button class="btn" id="checkRideBtn">Sprawdź przejazd</button>
+
+          <p class="small-note">Eko przejazd bez kombinowania. Punkty wykorzystasz po swojemu.</p>
+        </section>
+
+        <section class="card">
+          <h2 class="section-title">Twój wpływ i korzyści</h2>
+
+          <div class="impact">
+            <div class="impact-box">
+              <small>Przejechane km</small>
+              <strong>124 km</strong>
+            </div>
+
+            <div class="impact-box">
+              <small>Dostępne punkty</small>
+              <strong id="profilePoints">72</strong>
+            </div>
+
+            <div class="impact-box">
+              <small>Zasadzone drzewa</small>
+              <strong>3</strong>
+            </div>
+
+            <div class="impact-box">
+              <small>Zniżka z punktów</small>
+              <strong id="homeDiscountValue">7 zł</strong>
+            </div>
+          </div>
+
+          <div class="progress-wrap">
+            <div class="progress-top">
+              <span>Postęp do kolejnego drzewa</span>
+              <span id="profileProgressText">72 / 100</span>
+            </div>
+            <div class="progress">
+              <div class="progress-fill" id="profileProgressFill"></div>
+            </div>
+          </div>
+        </section>
+
+        <section class="card hidden" id="rideOptionsSection">
+          <h2 class="section-title">Wybierz przejazd</h2>
+
+          <div class="ride-option" data-type="Eko Taxi">
+            <div class="ride-header">
+              <div>
+                <div class="ride-name">Eko Taxi</div>
+                <div class="ride-desc">Standardowy przejazd. Punkty możesz wymienić na drzewa albo zniżki.</div>
+              </div>
+              <div class="price">34 zł</div>
+            </div>
+
+            <div class="ride-meta">
+              <span class="pill">🚕 6 min</span>
+              <span class="pill green">🌱 12 pkt</span>
+              <span class="pill">+1 zł zniżki</span>
+            </div>
+          </div>
+
+          <div class="ride-option" data-type="Green Saver">
+            <div class="ride-header">
+              <div>
+                <div class="ride-name">Green Saver</div>
+                <div class="ride-desc">Tańszy przejazd, dłuższy czas oczekiwania i więcej punktów.</div>
+              </div>
+              <div class="price">27 zł</div>
+            </div>
+
+            <div class="ride-meta">
+              <span class="pill">🚕 11 min</span>
+              <span class="pill green">🌱 18 pkt</span>
+              <span class="pill">+2 zł zniżki</span>
+            </div>
+          </div>
+
+          <div class="ride-option" data-type="Comfort Eco">
+            <div class="ride-header">
+              <div>
+                <div class="ride-name">Comfort Eco</div>
+                <div class="ride-desc">Wygodniejszy przejazd autem hybrydowym lub elektrycznym.</div>
+              </div>
+              <div class="price">45 zł</div>
+            </div>
+
+            <div class="ride-meta">
+              <span class="pill">🚕 4 min</span>
+              <span class="pill green">🌱 15 pkt</span>
+              <span class="pill">+1,50 zł zniżki</span>
+            </div>
+          </div>
+        </section>
+
+        <section class="card hidden" id="summarySection">
+          <h2 class="section-title">Podsumowanie przejazdu</h2>
+
+          <div class="mini-map">
+            <div class="road"></div>
+            <div class="pin start"></div>
+            <div class="pin end"></div>
+            <div class="car-dot">🚕</div>
+          </div>
+
+          <div class="summary-row">
+            <span>Typ przejazdu</span>
+            <span id="summaryType">Eko Taxi</span>
+          </div>
+
+          <div class="summary-row">
+            <span>Trasa</span>
+            <span id="summaryRoute">Warszawa, Centrum → Mokotów</span>
+          </div>
+
+          <div class="summary-row">
+            <span>Dystans</span>
+            <span>8,4 km</span>
+          </div>
+
+          <div class="summary-row">
+            <span>Cena</span>
+            <span id="summaryPrice">34 zł</span>
+          </div>
+
+          <div class="summary-row">
+            <span>Czas oczekiwania</span>
+            <span id="summaryTime">6 min</span>
+          </div>
+
+          <div class="summary-row">
+            <span>Punkty</span>
+            <span id="summaryPoints">12 pkt</span>
+          </div>
+
+          <div class="eco-message" id="ecoMessage">
+            Ten przejazd doda punkty. W profilu zdecydujesz, czy przeznaczysz je na drzewa, czy zniżki.
+          </div>
+
+          <div class="progress-wrap">
+            <div class="progress-top">
+              <span>Postęp do kolejnego drzewa</span>
+              <span id="summaryProgressText">84 / 100</span>
+            </div>
+            <div class="progress">
+              <div class="progress-fill" id="summaryProgressFill"></div>
+            </div>
+          </div>
+        </section>
+
+        <section class="card hidden" id="safetySection">
+          <h2 class="section-title">Bezpieczeństwo przejazdu</h2>
+
+          <div class="safety-grid">
+            <div class="safety-item"><b>✅</b>Sprawdzony kierowca</div>
+            <div class="safety-item"><b>🗺️</b>Widoczna trasa</div>
+            <div class="safety-item"><b>🚘</b>Auto: WX 4821E</div>
+            <div class="safety-item"><b>📲</b>Udostępnij trasę</div>
+            <div class="safety-item"><b>🆘</b>Szybka pomoc</div>
+            <div class="safety-item"><b>⭐</b>Kierowca 4.9</div>
+          </div>
+
+          <p class="small-note">Bezpiecznie do celu. Punkty wykorzystasz tak, jak chcesz.</p>
+
+          <button class="btn secondary" id="orderBtn" style="margin-top: 14px;">
+            Zamów przejazd
+          </button>
+        </section>
+      </section>
+
+      <section class="page" id="pageProfile">
+        <section class="hero">
+          <h1>Twój profil<br />EkoTaxi</h1>
+          <p>Sprawdzaj przejazdy, punkty, zniżki i swój wpływ na sadzenie drzew.</p>
+        </section>
+
+        <section class="card">
+          <div class="user-header">
+            <div class="user-avatar">👤</div>
+            <div>
+              <div class="user-name">Karol Nowak</div>
+              <div class="user-desc">Użytkownik EkoTaxi • Warszawa • aktywny od 2026</div>
+            </div>
+          </div>
+
+          <div class="user-stats">
+            <div class="user-stat"><strong>28</strong><small>Przejazdy</small></div>
+            <div class="user-stat"><strong>124</strong><small>Km</small></div>
+            <div class="user-stat"><strong>3</strong><small>Drzewa</small></div>
+          </div>
+        </section>
+
+        <section class="card">
+          <h2 class="section-title">Twoje punkty</h2>
+
+          <div class="impact">
+            <div class="impact-box"><small>Dostępne punkty</small><strong id="userPoints">72</strong></div>
+            <div class="impact-box"><small>Wartość zniżki</small><strong id="discountValue">7 zł</strong></div>
+            <div class="impact-box"><small>Drzewa zasadzone</small><strong>3</strong></div>
+            <div class="impact-box"><small>Do kolejnego drzewa</small><strong id="treeMissing">28 pkt</strong></div>
+          </div>
+
+          <div class="progress-wrap">
+            <div class="progress-top">
+              <span>Postęp do kolejnego drzewa</span>
+              <span id="profileTreeProgressText">72 / 100</span>
+            </div>
+            <div class="progress">
+              <div class="progress-fill" id="profileTreeProgressFill"></div>
+            </div>
+          </div>
+        </section>
+
+        <section class="card">
+          <h2 class="section-title">Co zrobić z punktami?</h2>
+
+          <div class="reward-choice active" data-reward="eco">
+            <div>
+              <strong>🌳 Sadzę drzewa</strong>
+              <small>Punkty z przejazdów idą na cele ekologiczne.</small>
+            </div>
+            <span>Wybrane</span>
+          </div>
+
+          <div class="reward-choice" data-reward="discount">
+            <div>
+              <strong>💸 Wolę zniżki</strong>
+              <small>Punkty wymieniam na tańsze kolejne przejazdy.</small>
+            </div>
+            <span>Wybierz</span>
+          </div>
+
+          <div class="eco-message" id="rewardMessage">
+            Aktualnie Twoje punkty pomagają sadzić drzewa.
+          </div>
+        </section>
+
+        <section class="card">
+          <h2 class="section-title">Historia przejazdów</h2>
+
+          <div class="history-item">
+            <div><strong>Centrum → Mokotów</strong><small>Eko Taxi • 34 zł • 12 pkt</small></div>
+            <span>dzisiaj</span>
+          </div>
+
+          <div class="history-item">
+            <div><strong>Wola → Praga</strong><small>Green Saver • 29 zł • 18 pkt</small></div>
+            <span>wczoraj</span>
+          </div>
+
+          <div class="history-item">
+            <div><strong>Śródmieście → Ursynów</strong><small>Comfort Eco • 46 zł • 15 pkt</small></div>
+            <span>pn.</span>
+          </div>
+        </section>
+      </section>
+
+      <section class="page" id="pageSettings">
+        <section class="hero">
+          <h1>Ustawienia<br />EkoTaxi</h1>
+          <p>Dostosuj przejazd do swoich potrzeb i zdecyduj, jak chcesz korzystać z punktów.</p>
+        </section>
+
+        <section class="card">
+          <h2 class="section-title">Preferencje przejazdu</h2>
+
+          <div class="setting-row">
+            <div><strong>Spokojna jazda</strong><small>Preferuj kierowców z łagodnym stylem jazdy.</small></div>
+            <div class="switch active"></div>
+          </div>
+
+          <div class="setting-row">
+            <div><strong>Bez rozmowy</strong><small>Przejazd bez narzucania rozmowy.</small></div>
+            <div class="switch"></div>
+          </div>
+
+          <div class="setting-row">
+            <div><strong>Preferuj auta eko</strong><small>Hybrydowe lub elektryczne, jeśli są dostępne.</small></div>
+            <div class="switch active"></div>
+          </div>
+        </section>
+
+        <section class="card">
+          <h2 class="section-title">Punkty i nagrody</h2>
+
+          <div class="input-wrap">
+            <label for="rewardSelect">Domyślne wykorzystanie punktów</label>
+            <select id="rewardSelect">
+              <option value="eco">Sadzenie drzew</option>
+              <option value="discount">Zniżki na przejazdy</option>
+            </select>
+          </div>
+
+          <div class="eco-message" id="settingsRewardMessage">
+            Obecnie punkty wspierają sadzenie drzew. Możesz to zmienić w każdej chwili.
+          </div>
+        </section>
+
+        <section class="card">
+          <h2 class="section-title">Powiadomienia</h2>
+
+          <div class="setting-row">
+            <div><strong>Status kierowcy</strong><small>Informacje o przyjeździe kierowcy.</small></div>
+            <div class="switch active"></div>
+          </div>
+
+          <div class="setting-row">
+            <div><strong>Punkty i zniżki</strong><small>Powiadomienia o punktach, drzewach lub rabatach.</small></div>
+            <div class="switch active"></div>
+          </div>
+        </section>
+      </section>
+    </section>
+
+    <nav class="bottom-nav">
+      <button class="nav-item active" data-page="pageHome"><span>🚕</span>Przejazd</button>
+      <button class="nav-item" data-page="pageProfile"><span>👤</span>Profil</button>
+      <button class="nav-item" data-page="pageSettings"><span>⚙️</span>Ustawienia</button>
+    </nav>
+
+    <div class="modal" id="successModal">
+      <div class="success-box">
+        <div class="tree-animation">
+          <span class="leaf one">🍃</span>
+          <span class="tree" id="successIcon">🌳</span>
+          <span class="leaf two">🍃</span>
+        </div>
+
+        <h2>Przejazd zamówiony!</h2>
+
+        <p id="successText">
+          Kierowca będzie za 6 minut.<br />
+          Zdobywasz 12 punktów.<br />
+          Punkty możesz wykorzystać po swojemu.
+        </p>
+
+        <button class="btn" id="resetBtn">Wróć do początku</button>
+      </div>
+    </div>
+  </main>
+
+  <script src="script.js"></script>
+</body>
+</html>
