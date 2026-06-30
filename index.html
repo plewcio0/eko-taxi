@@ -36,7 +36,7 @@
       </div>
 
       <section class="page active" id="pageHome">
-        <section class="hero">
+        <section class="hero hero-compact">
           <h1>Jedziesz.<br />Decydujesz.</h1>
           <p>Zbieraj punkty i wybierz, czy chcesz sadzić drzewa, czy odebrać zniżkę na kolejny przejazd.</p>
         </section>
@@ -54,7 +54,7 @@
           <div class="scheduled-list" id="scheduledRidesList"></div>
         </section>
 
-        <section class="card">
+        <section class="card order-card">
           <h2 class="section-title">🚕 Zamów przejazd</h2>
 
           <div class="input-wrap">
@@ -90,16 +90,6 @@
               <label for="scheduleTime">Termin</label>
               <input id="scheduleTime" type="datetime-local" />
             </div>
-          </div>
-
-          <div class="input-wrap">
-            <label for="paymentSelect">Płatność</label>
-            <select id="paymentSelect">
-              <option value="Karta •••• 4242">Karta •••• 4242</option>
-              <option value="BLIK">BLIK</option>
-              <option value="Gotówka">Gotówka</option>
-              <option value="Faktura firmowa">Faktura firmowa</option>
-            </select>
           </div>
 
           <div class="input-wrap">
@@ -246,7 +236,7 @@
 
           <div class="summary-row">
             <span>Płatność</span>
-            <span id="summaryPayment">Karta •••• 4242</span>
+            <span id="summaryPayment">Wybierzesz przy zamówieniu</span>
           </div>
 
           <div class="summary-row">
@@ -460,6 +450,11 @@
         </section>
 
         <section class="card">
+          <h2 class="section-title">🔔 Centrum powiadomień</h2>
+          <div class="notification-list" id="notificationList"></div>
+        </section>
+
+        <section class="card">
           <h2 class="section-title">📍 Książka adresowa</h2>
 
           <div class="address-book">
@@ -574,6 +569,52 @@
       <button class="nav-item" data-page="pageSettings"><span>⚙</span>Ustawienia</button>
     </nav>
 
+    <div class="modal" id="paymentModal">
+      <div class="success-box detail-box">
+        <h2>Potwierdź płatność</h2>
+
+        <div class="detail-list">
+          <div class="summary-row">
+            <span>Przejazd</span>
+            <span id="paymentRideType">Eko Taxi</span>
+          </div>
+          <div class="summary-row">
+            <span>Trasa</span>
+            <span id="paymentRoute">Warszawa, Centrum -> Mokotów</span>
+          </div>
+          <div class="summary-row">
+            <span>Cena bazowa</span>
+            <span id="paymentBaseAmount">34 zł</span>
+          </div>
+          <div class="summary-row hidden" id="paymentPointsRow">
+            <span>Zniżka z punktów</span>
+            <span id="paymentPointsDiscount">-0 zł</span>
+          </div>
+          <div class="summary-row">
+            <span>Do zapłaty</span>
+            <span id="paymentAmount">34 zł</span>
+          </div>
+          <div class="summary-row hidden" id="paymentPromoRow">
+            <span>Kupon</span>
+            <span id="paymentPromo">EKO10</span>
+          </div>
+        </div>
+
+        <div class="input-wrap">
+          <label for="paymentSelect">Metoda płatności</label>
+          <select id="paymentSelect">
+            <option value="Karta •••• 4242">Karta •••• 4242</option>
+            <option value="BLIK">BLIK</option>
+            <option value="Gotówka">Gotówka</option>
+            <option value="Faktura firmowa">Faktura firmowa</option>
+          </select>
+        </div>
+
+        <button class="btn" id="confirmPaymentBtn" type="button">Potwierdź i zamów</button>
+        <button class="btn secondary compact" id="closePaymentBtn" type="button">Wróć</button>
+      </div>
+    </div>
+
     <div class="modal" id="successModal">
       <div class="success-box">
         <div class="tree-animation">
@@ -640,10 +681,30 @@
 
           <button class="btn" id="shareSplitBtn" type="button">Udostępnij wiadomość</button>
           <button class="btn secondary compact" id="whatsappSplitBtn" type="button">Wyślij przez WhatsApp</button>
-          <button class="btn secondary compact" id="closeHistoryBtn" type="button">Zamknij</button>
 
           <p class="field-status" id="historyShareStatus" aria-live="polite"></p>
         </div>
+
+        <div class="complaint-panel">
+          <h3>Reklamacja przejazdu</h3>
+          <div class="input-wrap">
+            <label for="complaintReason">Powód</label>
+            <select id="complaintReason">
+              <option value="Problem z płatnością">Problem z płatnością</option>
+              <option value="Problem z trasą">Problem z trasą</option>
+              <option value="Problem z kierowcą">Problem z kierowcą</option>
+              <option value="Zagubiony przedmiot">Zagubiony przedmiot</option>
+            </select>
+          </div>
+          <div class="input-wrap">
+            <label for="complaintDetails">Opis</label>
+            <input id="complaintDetails" placeholder="Opisz krótko problem" />
+          </div>
+          <button class="btn danger" id="submitComplaintBtn" type="button">Wyślij reklamację</button>
+          <p class="field-status" id="complaintStatus" aria-live="polite"></p>
+        </div>
+
+        <button class="btn secondary compact" id="closeHistoryBtn" type="button">Zamknij</button>
       </div>
     </div>
 
@@ -668,7 +729,22 @@
             <label for="ratingComment">Komentarz</label>
             <input id="ratingComment" placeholder="np. punktualnie i spokojnie" />
           </div>
-          <button class="btn" id="saveRatingBtn" type="button">Zapisz ocenę</button>
+
+          <div class="tip-panel">
+            <h3>Napiwek</h3>
+            <div class="tip-options" id="tipOptions">
+              <button type="button" data-tip="0">0 zł</button>
+              <button type="button" data-tip="5">5 zł</button>
+              <button type="button" data-tip="10">10 zł</button>
+            </div>
+            <div class="input-wrap">
+              <label for="customTip">Własna kwota</label>
+              <input id="customTip" type="number" min="0" max="100" placeholder="np. 7" />
+            </div>
+            <p class="field-status" id="tipSummary">Napiwek: 0 zł</p>
+          </div>
+
+          <button class="btn" id="saveRatingBtn" type="button">Zapisz ocenę i napiwek</button>
         </div>
       </div>
     </div>

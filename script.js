@@ -126,6 +126,18 @@ let activePromo = null;
 let scheduledRides = [];
 let completedRideForRating = null;
 let selectedRating = 5;
+let confirmedPaymentMethod = "";
+let selectedTip = 0;
+let notifications = [
+  {
+    title: "Witaj w EkoTaxi",
+    detail: "Masz 72 punkty i 7 zł potencjalnej zniżki."
+  },
+  {
+    title: "Kupony testowe",
+    detail: "Możesz użyć EKO10, GREEN5 albo WELCOME15."
+  }
+];
 
 const appLoader = document.getElementById("appLoader");
 const screen = document.getElementById("screen");
@@ -147,6 +159,17 @@ const rideTimeMode = document.getElementById("rideTimeMode");
 const scheduleWrap = document.getElementById("scheduleWrap");
 const scheduleTime = document.getElementById("scheduleTime");
 const paymentSelect = document.getElementById("paymentSelect");
+const paymentModal = document.getElementById("paymentModal");
+const paymentRideType = document.getElementById("paymentRideType");
+const paymentRoute = document.getElementById("paymentRoute");
+const paymentBaseAmount = document.getElementById("paymentBaseAmount");
+const paymentAmount = document.getElementById("paymentAmount");
+const paymentPromoRow = document.getElementById("paymentPromoRow");
+const paymentPromo = document.getElementById("paymentPromo");
+const paymentPointsRow = document.getElementById("paymentPointsRow");
+const paymentPointsDiscount = document.getElementById("paymentPointsDiscount");
+const confirmPaymentBtn = document.getElementById("confirmPaymentBtn");
+const closePaymentBtn = document.getElementById("closePaymentBtn");
 const promoCode = document.getElementById("promoCode");
 const applyPromoBtn = document.getElementById("applyPromoBtn");
 const promoStatus = document.getElementById("promoStatus");
@@ -221,7 +244,12 @@ const shareSplitBtn = document.getElementById("shareSplitBtn");
 const whatsappSplitBtn = document.getElementById("whatsappSplitBtn");
 const closeHistoryBtn = document.getElementById("closeHistoryBtn");
 const historyShareStatus = document.getElementById("historyShareStatus");
+const complaintReason = document.getElementById("complaintReason");
+const complaintDetails = document.getElementById("complaintDetails");
+const submitComplaintBtn = document.getElementById("submitComplaintBtn");
+const complaintStatus = document.getElementById("complaintStatus");
 const historyList = document.getElementById("historyList");
+const notificationList = document.getElementById("notificationList");
 const scheduledRidesCard = document.getElementById("scheduledRidesCard");
 const scheduledRidesList = document.getElementById("scheduledRidesList");
 const addressBook = document.querySelector(".address-book");
@@ -233,6 +261,9 @@ const finishModal = document.getElementById("finishModal");
 const finishSummary = document.getElementById("finishSummary");
 const ratingStars = document.getElementById("ratingStars");
 const ratingComment = document.getElementById("ratingComment");
+const tipOptions = document.getElementById("tipOptions");
+const customTip = document.getElementById("customTip");
+const tipSummary = document.getElementById("tipSummary");
 const saveRatingBtn = document.getElementById("saveRatingBtn");
 
 const navItems = document.querySelectorAll(".nav-item");
@@ -276,8 +307,14 @@ function getDiscountAmount(price = selectedRide?.price || 0) {
   return Math.min(activePromo.value, price);
 }
 
+function getPointsDiscountAmount(price = selectedRide?.price || 0) {
+  if (rewardMode !== "discount") return 0;
+
+  return Math.min(calculateDiscount(basePoints), Math.max(price - getDiscountAmount(price), 0));
+}
+
 function getFinalPrice(price = selectedRide?.price || 0) {
-  return Math.max(price - getDiscountAmount(price), 0);
+  return Math.max(price - getDiscountAmount(price) - getPointsDiscountAmount(price), 0);
 }
 
 function updatePriceSummary() {
@@ -288,9 +325,24 @@ function updatePriceSummary() {
 
   summaryPrice.textContent = formatPrice(selectedRide.price);
   summaryFinalPrice.textContent = formatPrice(finalPrice);
-  summaryPayment.textContent = paymentSelect.value;
+  summaryPayment.textContent = confirmedPaymentMethod || "Wybierzesz przy zamówieniu";
   summaryDiscountRow.classList.toggle("hidden", discount <= 0);
   summaryDiscount.textContent = `-${formatPrice(discount)}`;
+}
+
+function renderNotifications() {
+  notificationList.innerHTML = notifications.map(item => `
+    <div class="notification-item">
+      <strong>${item.title}</strong>
+      <small>${item.detail}</small>
+    </div>
+  `).join("");
+}
+
+function addNotification(title, detail) {
+  notifications.unshift({ title, detail });
+  notifications = notifications.slice(0, 8);
+  renderNotifications();
 }
 
 function applyPromoCode() {
@@ -318,6 +370,7 @@ function applyPromoCode() {
   promoStatus.classList.add("success");
   promoStatus.classList.remove("error");
   updatePriceSummary();
+  addNotification("Kupon aktywny", `Zastosowano kod ${code}.`);
 }
 
 function setLocationStatus(message, type = "") {
@@ -486,6 +539,7 @@ function updateRewardMode(mode) {
   }
 
   updateSummaryMessage();
+  updatePriceSummary();
 }
 
 function updateSummaryMessage() {
@@ -561,7 +615,7 @@ function createActiveRide() {
     finalPrice: getFinalPrice(ride.price),
     discount: getDiscountAmount(ride.price),
     promo: activePromo?.label || "",
-    payment: paymentSelect.value,
+    payment: confirmedPaymentMethod,
     scheduleLabel,
     eta: isScheduled ? "O zaplanowanej godzinie" : `${ride.time} min`,
     statusIndex,
@@ -695,6 +749,35 @@ function handleScheduledAction(item, action) {
   changePage("pageCurrent");
 }
 
+function openPaymentModal() {
+  if (!selectedRide) {
+    selectRide("Eko Taxi");
+  }
+
+  updatePriceSummary();
+
+  const discount = getDiscountAmount(selectedRide.price);
+  const pointsDiscount = getPointsDiscountAmount(selectedRide.price);
+
+  paymentRideType.textContent = selectedRide.name;
+  paymentRoute.textContent = getRouteLabel();
+  paymentBaseAmount.textContent = formatPrice(selectedRide.price);
+  paymentAmount.textContent = formatPrice(getFinalPrice(selectedRide.price));
+  paymentPromoRow.classList.toggle("hidden", discount <= 0);
+  paymentPromo.textContent = activePromo ? `${activePromo.label} (-${formatPrice(discount)})` : "";
+  paymentPointsRow.classList.toggle("hidden", pointsDiscount <= 0);
+  paymentPointsDiscount.textContent = `-${formatPrice(pointsDiscount)}`;
+  paymentModal.classList.add("show");
+}
+
+function confirmPaymentAndOrder() {
+  confirmedPaymentMethod = paymentSelect.value;
+  summaryPayment.textContent = confirmedPaymentMethod;
+  paymentModal.classList.remove("show");
+  addNotification("Płatność potwierdzona", `Wybrano: ${confirmedPaymentMethod}.`);
+  orderRide();
+}
+
 function orderRide() {
   if (!selectedRide) {
     selectRide("Eko Taxi");
@@ -709,11 +792,12 @@ function orderRide() {
     successIcon.textContent = "OK";
     successText.innerHTML = `
       Przejazd zaplanowany na ${formatScheduleLabel()}.<br />
-      Płatność: ${paymentSelect.value}.<br />
+      Płatność: ${confirmedPaymentMethod}.<br />
       Znajdziesz go na górze ekranu głównego.
     `;
     viewCurrentRideBtn.textContent = "Wróć do głównej";
     successModal.classList.add("show");
+    addNotification("Przejazd zaplanowany", `${getRouteLabel()} • ${formatScheduleLabel()}.`);
     return;
   }
 
@@ -737,6 +821,7 @@ function orderRide() {
   `;
 
   successModal.classList.add("show");
+  addNotification("Przejazd zamówiony", `${activeRide.driver.name} jedzie po Ciebie.`);
 }
 
 function cancelRide() {
@@ -759,6 +844,7 @@ function advanceRideStatus() {
 
   activeRide.statusIndex = Math.min(activeRide.statusIndex + 1, 3);
   updateCurrentRideView();
+  addNotification("Status przejazdu", `${activeRide.route}: ${activeRide.status}.`);
 }
 
 function addCompletedRideToHistory(ride) {
@@ -786,6 +872,7 @@ function finishRide() {
   completedRideForRating = { ...activeRide };
   addCompletedRideToHistory(activeRide);
   finishSummary.textContent = `Przejazd ${activeRide.route} zakończony. Zapłacono ${formatPrice(activeRide.finalPrice)} i zdobyto ${activeRide.ride.points} pkt.`;
+  addNotification("Przejazd zakończony", `${activeRide.route} • ${formatPrice(activeRide.finalPrice)}.`);
   activeRide = null;
   updateCurrentRideView();
   finishModal.classList.add("show");
@@ -796,6 +883,7 @@ function sendQuickMessage(message) {
   chatStatus.textContent = `Wysłano do kierowcy: "${message}"`;
   chatStatus.classList.add("success");
   chatStatus.classList.remove("error");
+  addNotification("Wiadomość do kierowcy", message);
 }
 
 function changePage(pageId) {
@@ -834,7 +922,7 @@ function renderHistory() {
     <button class="history-item" type="button" data-history-id="${ride.id}">
       <div>
         <strong>${ride.route}</strong>
-        <small>${ride.type} - ${formatPrice(ride.price)} - ${ride.points} pkt${ride.rating ? ` - ${ride.rating}★` : ""}</small>
+        <small>${ride.type} - ${formatPrice(ride.price)} - ${ride.points} pkt${ride.rating ? ` - ${ride.rating}★` : ""}${ride.complaint ? " - reklamacja" : ""}</small>
       </div>
       <span>${ride.date}</span>
     </button>
@@ -876,6 +964,12 @@ function openHistoryRide(rideId) {
   historyDate.textContent = selectedHistoryRide.date;
   historyPrice.textContent = formatPrice(selectedHistoryRide.price);
   historyPoints.textContent = `${selectedHistoryRide.points} pkt`;
+  complaintStatus.textContent = selectedHistoryRide.complaint
+    ? `Wysłano: ${selectedHistoryRide.complaint.reason}`
+    : "";
+  complaintStatus.classList.toggle("success", Boolean(selectedHistoryRide.complaint));
+  complaintStatus.classList.remove("error");
+  complaintDetails.value = "";
 
   updateHistorySplitPreview();
   historyModal.classList.add("show");
@@ -912,9 +1006,50 @@ function openWhatsappSplit() {
   window.open(href, "_blank", "noopener");
 }
 
+function submitComplaint() {
+  const details = complaintDetails.value.trim();
+
+  if (!details) {
+    complaintStatus.textContent = "Dodaj krótki opis reklamacji.";
+    complaintStatus.classList.add("error");
+    complaintStatus.classList.remove("success");
+    return;
+  }
+
+  selectedHistoryRide.complaint = {
+    reason: complaintReason.value,
+    details
+  };
+  complaintStatus.textContent = "Reklamacja została wysłana do obsługi.";
+  complaintStatus.classList.add("success");
+  complaintStatus.classList.remove("error");
+  complaintDetails.value = "";
+  addNotification("Reklamacja wysłana", `${selectedHistoryRide.route}: ${complaintReason.value}.`);
+  renderHistory();
+}
+
 function updateRatingStars() {
   ratingStars.querySelectorAll("button").forEach(button => {
     button.classList.toggle("active", Number(button.dataset.rating) <= selectedRating);
+  });
+}
+
+function getTipValue() {
+  const customValue = Number.parseFloat(customTip.value);
+
+  if (Number.isFinite(customValue) && customValue > 0) {
+    return Math.min(customValue, 100);
+  }
+
+  return selectedTip;
+}
+
+function updateTipSummary() {
+  const tip = getTipValue();
+  tipSummary.textContent = `Napiwek: ${formatPrice(tip)}`;
+
+  tipOptions.querySelectorAll("button").forEach(button => {
+    button.classList.toggle("active", Number(button.dataset.tip) === selectedTip && !customTip.value);
   });
 }
 
@@ -925,11 +1060,18 @@ function saveRating() {
   }
 
   const latestRide = historyRides[0];
+  const tip = getTipValue();
   latestRide.rating = selectedRating;
   latestRide.comment = ratingComment.value.trim();
+  latestRide.tip = tip;
+  latestRide.price = latestRide.price + tip;
   renderHistory();
+  addNotification("Ocena zapisana", `Kierowca oceniony na ${selectedRating}★, napiwek: ${formatPrice(tip)}.`);
   finishModal.classList.remove("show");
   ratingComment.value = "";
+  customTip.value = "";
+  selectedTip = 0;
+  updateTipSummary();
 }
 
 function saveNewPlace() {
@@ -959,6 +1101,7 @@ function saveNewPlace() {
   savePlaceStatus.textContent = "Miejsce zapisane w książce adresowej.";
   savePlaceStatus.classList.add("success");
   savePlaceStatus.classList.remove("error");
+  addNotification("Nowe miejsce zapisane", `${name}: ${address}.`);
 }
 
 function bindEvents() {
@@ -966,7 +1109,6 @@ function bindEvents() {
   fromInput.addEventListener("input", updateSummaryRoute);
   toInput.addEventListener("input", updateSummaryRoute);
 
-  paymentSelect.addEventListener("change", updatePriceSummary);
   applyPromoBtn.addEventListener("click", applyPromoCode);
   promoCode.addEventListener("keydown", event => {
     if (event.key === "Enter") {
@@ -985,7 +1127,11 @@ function bindEvents() {
     });
   });
 
-  orderBtn.addEventListener("click", orderRide);
+  orderBtn.addEventListener("click", openPaymentModal);
+  confirmPaymentBtn.addEventListener("click", confirmPaymentAndOrder);
+  closePaymentBtn.addEventListener("click", () => {
+    paymentModal.classList.remove("show");
+  });
 
   viewCurrentRideBtn.addEventListener("click", () => {
     successModal.classList.remove("show");
@@ -1075,6 +1221,7 @@ function bindEvents() {
   closeHistoryBtn.addEventListener("click", () => {
     historyModal.classList.remove("show");
   });
+  submitComplaintBtn.addEventListener("click", submitComplaint);
 
   savePlaceBtn.addEventListener("click", saveNewPlace);
 
@@ -1086,6 +1233,17 @@ function bindEvents() {
     updateRatingStars();
   });
 
+  tipOptions.addEventListener("click", event => {
+    const button = event.target.closest("button");
+    if (!button) return;
+
+    selectedTip = Number(button.dataset.tip);
+    customTip.value = "";
+    updateTipSummary();
+  });
+
+  customTip.addEventListener("input", updateTipSummary);
+
   saveRatingBtn.addEventListener("click", saveRating);
 }
 
@@ -1095,8 +1253,10 @@ updateRewardMode("eco");
 updateScheduleSummary();
 updateCurrentRideView();
 renderHistory();
+renderNotifications();
 renderScheduledRides();
 updateRatingStars();
+updateTipSummary();
 bindEvents();
 
 window.addEventListener("load", () => {
